@@ -11,14 +11,64 @@ import "./App.css";
 import { supabase } from "./supabaseClient";
 
 function App() {
+  const [session, setSession] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Fuel");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
-    fetchExpenses();
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchExpenses();
+    }
+  }, [session]);
+
+  async function signUp() {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Account created. Check your email if confirmation is required.");
+    }
+  }
+
+  async function signIn() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
+    }
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    setExpenses([]);
+  }
 
   async function fetchExpenses() {
     const { data, error } = await supabase
@@ -36,13 +86,14 @@ function App() {
   async function addExpense(e) {
     e.preventDefault();
 
-    if (!name || !amount) return;
+    if (!name || !amount || !session) return;
 
     const { error } = await supabase.from("expenses").insert([
       {
         name,
         amount: Number(amount),
         category,
+        user_id: session.user.id,
       },
     ]);
 
@@ -89,9 +140,43 @@ function App() {
     }, {})
   );
 
+  if (!session) {
+    return (
+      <div className="container">
+        <h1>Cloud Budget Dashboard</h1>
+
+        <div className="card">
+          <h2>Login / Sign Up</h2>
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button onClick={signIn}>Login</button>
+          <button onClick={signUp}>Create Account</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <h1>Cloud Budget Dashboard</h1>
+
+      <div className="card">
+        <p>Logged in as: {session.user.email}</p>
+        <button onClick={signOut}>Logout</button>
+      </div>
 
       <div className="card">
         <h2>Total Spent</h2>
