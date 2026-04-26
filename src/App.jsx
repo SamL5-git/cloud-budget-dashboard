@@ -66,6 +66,19 @@ function App() {
     }
   }
 
+  async function signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      alert(error.message);
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     setExpenses([]);
@@ -174,6 +187,10 @@ function App() {
               Create Account
             </button>
           </div>
+
+          <button onClick={signInWithGoogle} className="secondary-btn">
+            Continue with Google
+          </button>
         </div>
       ) : (
         <>
