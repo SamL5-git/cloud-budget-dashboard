@@ -176,6 +176,36 @@ function App() {
       fetchExpenses();
     }
   }
+  function exportToCSV() {
+  if (monthlyExpenses.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const headers = ["Name", "Amount (€)", "Category", "Date"];
+
+  const rows = monthlyExpenses.map((e) => [
+    e.name,
+    e.amount,
+    e.category,
+    e.expense_date || e.created_at,
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) => row.join(","))
+    .join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", `expenses-${selectedMonth}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
 
   const monthlyExpenses = expenses.filter((expense) => {
     const dateToUse = expense.expense_date || expense.created_at;
@@ -452,7 +482,13 @@ function App() {
             </div>
 
             <div className="card full">
-              <h2>Expenses</h2>
+  <div className="section-header">
+    <h2>Expenses</h2>
+
+    <button onClick={exportToCSV} className="export-btn">
+      Export CSV
+    </button>
+  </div>
 
               {loading ? (
                 <p>Loading...</p>

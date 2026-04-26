@@ -327,3 +327,16 @@ p {
     max-width: 100%;
   }
 }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.export-btn {
+  width: auto;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
